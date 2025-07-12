@@ -64,6 +64,7 @@ const usersFilePath = path.join(__dirname, 'users.json');
 
 app.post('/save-user', (req, res) => {
   const userData = req.body;
+console.log("📩 Received user data:", userData);
 
   if (!userData.firstName || !userData.lastName || !userData.phone) {
     return res.status(400).json({ success: false, message: 'الحقول ناقصة' });
