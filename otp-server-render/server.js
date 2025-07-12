@@ -63,10 +63,12 @@ app.post('/verify-otp', (req, res) => {
 const usersFilePath = path.join(__dirname, 'users.json');
 
 app.post('/save-user', (req, res) => {
-  const userData = req.body;
-console.log("📩 Received user data:", userData);
+  const { firstName, lastName, phone, email } = req.body;
+  const userData = { firstName, lastName, phone, email };
 
-  if (!userData.firstName || !userData.lastName || !userData.phone) {
+  console.log("📩 Received user data:", userData);
+
+  if (!firstName || !lastName || !phone || !email) {
     return res.status(400).json({ success: false, message: 'الحقول ناقصة' });
   }
 
@@ -88,10 +90,12 @@ console.log("📩 Received user data:", userData);
         return res.status(500).json({ success: false, message: 'ما قدرناش نخزن البيانات' });
       }
 
+      console.log("✅ User saved successfully:", userData);
       return res.json({ success: true, message: 'تم حفظ البيانات بنجاح ✅' });
     });
   });
 });
+
 
 // ✅ اختبار الاتصال
 app.get("/", (req, res) => {
