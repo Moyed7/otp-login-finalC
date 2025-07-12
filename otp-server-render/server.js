@@ -2,6 +2,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const sgMail = require('@sendgrid/mail');
+const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -11,13 +13,13 @@ app.use(cors());
 app.use(bodyParser.json());
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
 const otps = {};
 
 function generateOTP() {
   return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
+// ✅ إرسال OTP
 app.post('/send-otp', async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ success: false });
@@ -41,6 +43,7 @@ app.post('/send-otp', async (req, res) => {
   }
 });
 
+// ✅ التحقق من OTP
 app.post('/verify-otp', (req, res) => {
   const { email, otp } = req.body;
   const record = otps[email];
@@ -56,6 +59,40 @@ app.post('/verify-otp', (req, res) => {
   res.status(400).json({ success: false });
 });
 
+// ✅ حفظ معلومات المستخدم
+const usersFilePath = path.join(__dirname, 'users.json');
+
+app.post('/save-user', (req, res) => {
+  const userData = req.body;
+
+  if (!userData.firstName || !userData.lastName || !userData.phone) {
+    return res.status(400).json({ success: false, message: 'الحقول ناقصة' });
+  }
+
+  fs.readFile(usersFilePath, 'utf8', (err, data) => {
+    let users = [];
+
+    if (!err && data) {
+      try {
+        users = JSON.parse(data);
+      } catch (parseErr) {
+        return res.status(500).json({ success: false, message: 'خطأ في قراءة البيانات القديمة' });
+      }
+    }
+
+    users.push(userData);
+
+    fs.writeFile(usersFilePath, JSON.stringify(users, null, 2), (writeErr) => {
+      if (writeErr) {
+        return res.status(500).json({ success: false, message: 'ما قدرناش نخزن البيانات' });
+      }
+
+      return res.json({ success: true, message: 'تم حفظ البيانات بنجاح ✅' });
+    });
+  });
+});
+
+// ✅ اختبار الاتصال
 app.get("/", (req, res) => {
   res.send("✅ OTP Server is running.");
 });
